@@ -4,7 +4,7 @@ module TopEntity(
 );
 reg [31:0]count = 0;
 always @(posedge FPGA_CLK1_50) begin
-	if(count == 99999999) begin //Time is up
+	if(count == 999999) begin //Time is up
 		count <= 0; //Reset count register
 		LED[0] <= ~LED[0]; //Toggle led (in each second)
 	end else begin
