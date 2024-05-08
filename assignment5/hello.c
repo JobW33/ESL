@@ -54,6 +54,36 @@ on_pad_added (GstElement *element,
   gst_object_unref (sinkpad);
 }
 
+/* The appsink has received a buffer */
+static GstFlowReturn new_sample (GstElement *sink) {
+  GstSample *sample;
+
+  /* Retrieve the buffer */
+  g_signal_emit_by_name (sink, "pull-sample", &sample);
+  if (sample) {
+    /* The only thing we do in this example is print a * to indicate a received buffer */
+    GstBuffer *buffer =  gst_sample_get_buffer(sample);
+//    GstCaps *caps =  gst_sample_get_caps(sample);
+//    GstSegment *segment = gst_sample_get_segment(sample);
+    g_print("%ld\n", buffer->pts);
+//    g_print("%ld\n", buffer->offset);
+//    g_print("%ld\n", buffer->duration);
+    
+//    GstMapInfo info;
+//    gst_buffer_map (buffer, &info, GST_MAP_READ);
+//    gst_buffer_unmap(buffer, &info);
+
+//    g_print("Data received (%" G_GSIZE_FORMAT " bytes):\n", info.size);
+//    g_print(info);
+
+//    gst_caps_unref(caps);
+//    gst_buffer_unref(buffer);
+    gst_sample_unref (sample);
+    return GST_FLOW_OK;
+  }
+
+  return GST_FLOW_ERROR;
+}
 
 int
 main (int   argc,
@@ -78,7 +108,7 @@ main (int   argc,
   encoder  = gst_element_factory_make ("jpegenc",       "jpeg encoder");
   capfilt  = gst_element_factory_make ("capsfilter",    "jpeg data format");
   decoder  = gst_element_factory_make ("jpegdec",       "jpeg decoder");
-  sink     = gst_element_factory_make ("filesink",      "file sink");
+  sink     = gst_element_factory_make ("appsink",       "app sink");
 
   if (!pipeline || !source || !encoder || !capfilt || !decoder || !sink) {
     g_printerr ("One element could not be created. Exiting.\n");
@@ -93,10 +123,12 @@ main (int   argc,
 // CHATGPT
   /* Set the source device */
   g_object_set(G_OBJECT(source), "device", "/dev/video0", NULL); // Adjust source location.
-
-  /* Set the output file location */
-  g_object_set(G_OBJECT(sink), "location", "epic_media.yuv", NULL);
 // CHATGPT
+
+  /* Configure appsink */
+  g_object_set (sink, "emit-signals", TRUE, NULL);
+  g_signal_connect (sink, "new-sample", G_CALLBACK (new_sample), NULL);
+
 
   /* we add a message handler */
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
