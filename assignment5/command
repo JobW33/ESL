@@ -1,0 +1,7 @@
+clear; gcc hello.c -o gst_hello $(pkg-config --cflags --libs gstreamer-1.0)
+
+./gst_hello
+
+mplayer -demuxer rawvideo -rawvideo w=160:h=120:format=i420 epic_media.yuv
+
+gst-inspect-1.0 v4l2src
