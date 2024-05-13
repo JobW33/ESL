@@ -11,17 +11,10 @@ input input_A;
 input input_B;
 output integer direction_count;
 
-reg reset_reg = 0;
-
-always @ (posedge reset)
-    reset_reg = 1;
-
-always @ (posedge input_A) begin
-
-    if (reset_reg) begin
-        direction_count = 0;
-        reset_reg = 0;
-    end else if (input_B)
+always @ (posedge input_A, posedge reset) begin
+	 if (reset == 1)
+		  direction_count = 0;
+    else if (input_B)
         // if B is already high:
         direction_count = direction_count + 1;
     else
