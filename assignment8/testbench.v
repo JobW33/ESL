@@ -24,7 +24,6 @@ end
 
 initial begin #(SIM_END * PERIOD) // total number of clock cycles to simulate
     $display(" >>> Simulation finished");
-    $dumpfile("quadrature_decoder_output.vcd");
     $dumpvars;
     $finish;
 end
