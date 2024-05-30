@@ -1,2 +1,5 @@
-ip: 10.0.100.25
+ip: 10.0.15.73
+usr: root
 pswd: EmbeddedSystemsLab
+
+sudo minicom esl

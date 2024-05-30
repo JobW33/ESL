@@ -1,48 +1,112 @@
-//https://learnembeddedsystems.co.uk/bmp280-and-pi-pico-over-spi
+#include <error.h>
+#include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <string.h>
-#include "pico/stdlib.h"
-#include "hardware/spi.h"
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <stdbool.h>
 
-#define MISO 16
-#define CS   17
-#define SCLK 18
-#define MOSI 19
+#include "soc_system.h"
 
-#define SPI_PORT spi0
+#include <signal.h>
+#include <stdio.h>
 
-int main(){
-//    stdio_init_all(); // Initialise I/O for USB Serial
+int fd = 0;
+int* esl_demo_map = NULL;
 
-    spi_init(SPI_PORT, 500000); // Initialise spi0 at 500kHz
+
+void sigint(int a)
+{
+	//reset
+	esl_demo_map[0] = 1 << 31;
+	esl_demo_map[1] = 1 << 31;
+	esl_demo_map[2] = 1 << 31;
+	esl_demo_map[3] = 1 << 31;
+	esl_demo_map[4] = 1 << 31;
+	close(fd);
+	printf("%Existing program, triggering software reset\n");
+    exit(-1);
+}
+
+
+uint32_t percentage_to_pwm(int percentage);
+
+int main(int argc, char** argv) {
+  int max = 512;
+  int delay = 1000000; //us
+  
+	
+  fd = open("/dev/mem", O_RDWR | O_SYNC);
+
+  if (fd < 0) {
+    perror("Couldn't open /dev/mem\n");
+    return -1;
+  }
+
+  esl_demo_map = (int*)mmap(NULL, HPS_0_ARM_A9_0_ESL_BUS_DEMO_0_SPAN, PROT_READ | PROT_WRITE, MAP_SHARED, fd, HPS_0_ARM_A9_0_ESL_BUS_DEMO_0_BASE);
+  if (esl_demo_map == MAP_FAILED) {
+    perror("Couldn't map bridge.");
+    close(fd);
+    return -1;
+  }
+  
+  signal(SIGINT, sigint);
+
+  //reset
+  esl_demo_map[0] = 1 << 31;
+  esl_demo_map[0] = 0;
+  esl_demo_map[3] = 1 << 31;
+  esl_demo_map[3] = 0;
+  esl_demo_map[4] = 1 << 31;
+  esl_demo_map[4] = 0;
+  
+  //set pwm signal to 0%
+  esl_demo_map[3] = 0;
+  
+  //print pitch and yaw
+  int index = 0;
+  int percentage = 0;
+  while (true)
+  {
+    //change the percentage the pwm module is high this also changes the direction just for testing puposes
+    uint32_t esl_update = percentage_to_pwm(percentage);
+    esl_demo_map[3] = esl_update;
+    esl_demo_map[4] = esl_update;
+    percentage = percentage >= 99 ? 0 : percentage + 1;
+
+
+    //get pitch and yaw
+    int pitch = esl_demo_map[1];
+    int yaw   = esl_demo_map[2];
     
-    //Initialise GPIO pins for SPI communication
-    gpio_set_function(MISO, GPIO_FUNC_SPI);
-    gpio_set_function(SCLK, GPIO_FUNC_SPI);
-    gpio_set_function(MOSI, GPIO_FUNC_SPI);
+    //print status update
+    printf("%4d  pitch: %8d yaw: %8d percentage: %3d\n", index, yaw, pitch, percentage);
+	
+	// [5] and [6] contain the DEBUG registers
+	printf("YAW_cnt: %5d PITCH_CNT: %5d\n", esl_demo_map[5], esl_demo_map[6]);
+	printf("YAW_CTRL: %32b PITCH_CTRL: %32b\n", esl_demo_map[3], esl_demo_map[4]);
 
-    // Configure Chip Select
-    gpio_init(CS); // Initialise CS Pin
-    gpio_set_dir(CS, GPIO_OUT); // Set CS as output
-    gpio_put(CS, 1); // Set CS High to indicate no currect SPI communication
+    // sleep and update index
+    usleep(delay);
+    index = index + 1;
+  }
 
-    uint8_t toggle = 1;
-    uint8_t read = 2;
-    uint8_t read_data = 0;
-    int index = 0;
+  return 0;
+}
 
-    while(1){
-        gpio_put(CS, 0);
-        spi_write_blocking(SPI_PORT, &toggle, 1);
-        spi_write_blocking(SPI_PORT, &toggle, 1);
-        spi_write_blocking(SPI_PORT, &toggle, 1);
-        spi_write_blocking(SPI_PORT, &read, 1);
-        spi_read_blocking(SPI_PORT, 0, read_data, 1);
-        gpio_put(CS, 1);
+uint32_t percentage_to_pwm(int percentage)
+{
+  // big variable that reprisents 1%
+  const uint32_t one_percent32_t = 0xFFFFFFFF / 100;
 
-        printf("%4d  Amount of times toggled: %4d\n", index, read_data);
+  // percentage
+  uint32_t output = one_percent32_t * percentage;   // get percentage in 32 bits form
+  output = output >> (32 - 11);   // shift right 21 bits
+  output = output & 0x000007FF;  //mask with 11 bits just to be sure
+  
+  // update direction, get the direction depending on multiple of 2 and shift 30 bits
+  output = output | ((percentage % 2 == 0 ? 1 : 0) << 30);
 
-        sleep_ms(1000);
-        index = index + 1;
-    }
+  return output;
 }

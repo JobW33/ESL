@@ -1,1 +1,2 @@
 ssh rpi@10.0.15.53
+pwd: rpi
