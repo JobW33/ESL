@@ -1,112 +1,47 @@
-#include <error.h>
-#include <fcntl.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/mman.h>
+#include <string.h>
+#include "spidev-lib/src/spidev_lib.h"
 #include <unistd.h>
-#include <stdbool.h>
 
-#include "soc_system.h"
-
-#include <signal.h>
-#include <stdio.h>
-
-int fd = 0;
-int* esl_demo_map = NULL;
+spi_config_t spi_config;
+uint8_t tx_buffer;
+uint8_t rx_buffer;
 
 
-void sigint(int a)
+void main( void)
 {
-	//reset
-	esl_demo_map[0] = 1 << 31;
-	esl_demo_map[1] = 1 << 31;
-	esl_demo_map[2] = 1 << 31;
-	esl_demo_map[3] = 1 << 31;
-	esl_demo_map[4] = 1 << 31;
-	close(fd);
-	printf("%Existing program, triggering software reset\n");
-    exit(-1);
-}
+  int spifd;
+  spi_config.mode=0;
+  spi_config.speed=1;
+  spi_config.delay=0;
+  spi_config.bits_per_word=8;
 
+  spifd=spi_open("/dev/spidev0.1", spi_config);
 
-uint32_t percentage_to_pwm(int percentage);
-
-int main(int argc, char** argv) {
-  int max = 512;
-  int delay = 1000000; //us
-  
-	
-  fd = open("/dev/mem", O_RDWR | O_SYNC);
-
-  if (fd < 0) {
-    perror("Couldn't open /dev/mem\n");
-    return -1;
-  }
-
-  esl_demo_map = (int*)mmap(NULL, HPS_0_ARM_A9_0_ESL_BUS_DEMO_0_SPAN, PROT_READ | PROT_WRITE, MAP_SHARED, fd, HPS_0_ARM_A9_0_ESL_BUS_DEMO_0_BASE);
-  if (esl_demo_map == MAP_FAILED) {
-    perror("Couldn't map bridge.");
-    close(fd);
-    return -1;
-  }
-  
-  signal(SIGINT, sigint);
-
-  //reset
-  esl_demo_map[0] = 1 << 31;
-  esl_demo_map[0] = 0;
-  esl_demo_map[3] = 1 << 31;
-  esl_demo_map[3] = 0;
-  esl_demo_map[4] = 1 << 31;
-  esl_demo_map[4] = 0;
-  
-  //set pwm signal to 0%
-  esl_demo_map[3] = 0;
-  
-  //print pitch and yaw
-  int index = 0;
-  int percentage = 0;
-  while (true)
+  for (int _ = 0; _ < 10; _++)
   {
-    //change the percentage the pwm module is high this also changes the direction just for testing puposes
-    uint32_t esl_update = percentage_to_pwm(percentage);
-    esl_demo_map[3] = esl_update;
-    esl_demo_map[4] = esl_update;
-    percentage = percentage >= 99 ? 0 : percentage + 1;
+	//toggle led
+  	tx_buffer = 1;
+  	rx_buffer = 0;
 
+//  	printf("sending %d, to spidev2.0 in full duplex \n ",tx_buffer);
 
-    //get pitch and yaw
-    int pitch = esl_demo_map[1];
-    int yaw   = esl_demo_map[2];
-    
-    //print status update
-    printf("%4d  pitch: %8d yaw: %8d percentage: %3d\n", index, yaw, pitch, percentage);
-	
-	// [5] and [6] contain the DEBUG registers
-	printf("YAW_cnt: %5d PITCH_CNT: %5d\n", esl_demo_map[5], esl_demo_map[6]);
-	printf("YAW_CTRL: %32b PITCH_CTRL: %32b\n", esl_demo_map[3], esl_demo_map[4]);
+  	spi_xfer(spifd, &tx_buffer, 1, &rx_buffer, 1);
 
-    // sleep and update index
-    usleep(delay);
-    index = index + 1;
+  	printf("rx_buffer=%d\n",rx_buffer);
+
+	//read data
+  	tx_buffer = 2;
+  	rx_buffer = 0;
+
+//  	printf("sending %d, to spidev2.0 in full duplex \n ",tx_buffer);
+
+  	spi_xfer(spifd, &tx_buffer, 1, &rx_buffer, 1);
+
+//  	printf("rx_buffer=%d\n",rx_buffer);
+	usleep(1000000);
   }
 
-  return 0;
-}
-
-uint32_t percentage_to_pwm(int percentage)
-{
-  // big variable that reprisents 1%
-  const uint32_t one_percent32_t = 0xFFFFFFFF / 100;
-
-  // percentage
-  uint32_t output = one_percent32_t * percentage;   // get percentage in 32 bits form
-  output = output >> (32 - 11);   // shift right 21 bits
-  output = output & 0x000007FF;  //mask with 11 bits just to be sure
-  
-  // update direction, get the direction depending on multiple of 2 and shift 30 bits
-  output = output | ((percentage % 2 == 0 ? 1 : 0) << 30);
-
-  return output;
+  spi_close(spifd);
 }

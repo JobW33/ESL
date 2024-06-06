@@ -21,7 +21,6 @@ assign direction = mem_in[DATA_WIDTH-2];
 reg [COUNT_SIZE-1:0] pwm_cnt = 0;
 
 always @ (posedge clk, posedge reset) begin
-    pwm_cnt = pwm_cnt + 1;
     
 	if (reset == 1) begin
         output_A  = 0;
@@ -29,6 +28,7 @@ always @ (posedge clk, posedge reset) begin
 		pwm       = 0;
 		pwm_cnt   = 0;
     end else begin
+    pwm_cnt = pwm_cnt + 1;
 	 
 		pwm = (pwm_cnt < duty_cycle);
         output_A = direction;

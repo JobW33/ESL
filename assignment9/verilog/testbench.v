@@ -5,19 +5,15 @@ parameter SIMULATION_PHASES = 4;
 parameter WORD_TIME = 2 * SIM_DATA_WIDTH;
 parameter PERIOD = WORD_TIME * 8;
 
-reg reset = 0;
-reg clk = 1;
+reg clk = 0;
 reg chip_select = 1;
 reg MOSI = 0;
 
-led_spi_slave #(.DATA_WIDTH(SIM_DATA_WIDTH)) DUT (reset, clk, chip_select, MOSI, MISO, led);
+led_spi_slave #(.DATA_WIDTH(SIM_DATA_WIDTH)) DUT (clk, chip_select, MOSI, MISO, led, led2, led3);
 
 // begin of simulation
 initial begin
     $display(" >>> Simulation starting");
-    reset = 1;
-    #1;
-    reset = 0;
 end
 
 initial begin #(SIMULATION_PHASES * PERIOD) // total number of clock cycles to simulate
@@ -65,7 +61,9 @@ always begin
     #1;
 
 
+    chip_select = 1;
     #WORD_TIME;
+    chip_select = 0;
     // 2 word 0x1
     clk = ~clk;
     #1;
@@ -103,6 +101,7 @@ always begin
     MOSI = 0;
     
 
+    chip_select = 1;
     #WORD_TIME;
     chip_select = 1;
     // 3 word 0x1
@@ -181,7 +180,9 @@ always begin
     MOSI = 0;
 
 
+    chip_select = 1;
     #WORD_TIME;
+    chip_select = 0;
     // 5 word 0x2
     clk = ~clk;
     #1;
