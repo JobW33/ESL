@@ -1,10 +1,12 @@
-module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH) (
+module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH = 16) (
     input wire SPI_CLK,
     input wire SPI_CS,
     input wire SPI_MOSI,
     output reg SPI_MISO = 0,
 
     output reg led = 1,
+    output reg led2 = 1,
+    output reg led3 = 1,
     output reg rst = 1,
 
     input wire [QD_DATA_WIDTH-1:0] YAW_COUNT,
@@ -71,7 +73,9 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH) 
           end
           
           word_counter = word_counter + 1'b1;
-          rst <= 0;
+          rst = 0;
+          led2 = 0;
+          led3 = 0;
 
           case (commandState)
             /*
@@ -84,6 +88,8 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH) 
                 rst <= 1;
                 write_enable <= 0;
                 word_counter = 0;
+		led <= 0;
+		led3 <= 1;
               end
 
             /*
@@ -156,6 +162,7 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH) 
             * You're not supposed to be here
             */
             default: begin
+              led2 <= 1;
               word_counter = 0;
             end
           endcase

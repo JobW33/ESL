@@ -13,7 +13,8 @@ enum CommandID {
     SET_PITCH = 0x11, 
     GET_PITCH = 0x12,
     SET_YAW = 0x21, 
-    GET_YAW = 0x22
+    GET_YAW = 0x22,
+    TOGGLE_LED = 0x31
 };
 
 /**
@@ -29,6 +30,8 @@ enum CommandID {
  * 0x22 Get the current yaw angle
  *    1 byte send
  *    1 byte received 
+ * 0x31 Toggle LED
+ *    1 byte send
 */
 class RPI_AxisDevice : public AxisDevice{
 public: 
@@ -88,8 +91,8 @@ public:
     uint8_t tx[4]; 
     tx[0] = setCMD;
     tx[1] = (forward? 1 : 0);
-    tx[2] = *(&duty_val+1);
-    tx[3] = *(&duty_val);
+    tx[2] = *(&duty_val);
+    tx[3] = *(&duty_val+1);
 
     //send
     spi_write(device, tx, 3);
@@ -115,13 +118,18 @@ public:
     reset();
 
     // Create the Axis Devices
-    this->pitch = new RPI_AxisDevice(devfd, 540, CommandID::SET_PITCH, CommandID::GET_PITCH);
-    this->yaw = new RPI_AxisDevice(devfd,  1240, CommandID::SET_YAW, CommandID::GET_YAW);
+    this->pitch = new RPI_AxisDevice(devfd, 510, CommandID::SET_PITCH, CommandID::GET_PITCH);
+    this->yaw = new RPI_AxisDevice(devfd,  1254, CommandID::SET_YAW, CommandID::GET_YAW);
   }
 
   // reset all the devices
   void reset(){
     uint8_t cmd = CommandID::RESET;
+    spi_write(devfd, &cmd, 1);
+  }
+
+  void toggleLed(){
+    uint8_t cmd = CommandID::TOGGLE_LED;
     spi_write(devfd, &cmd, 1);
   }
 

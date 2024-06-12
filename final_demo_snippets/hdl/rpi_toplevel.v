@@ -17,6 +17,8 @@ module toplevel #(parameter
 
     // debug LED
     output wire led,
+    output wire led2,
+    output wire led3,
     
     // External signals
     input wire PITCH_ENC_A,
@@ -50,6 +52,8 @@ spi_slave #(
     .SPI_MISO           (SPI_MISO),
 
     .led                (led),
+    .led2               (led2),
+    .led3               (led3),
     .rst                (rst),
 
     .YAW_COUNT          (QD_YAW_direction_count),
