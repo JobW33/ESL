@@ -76,8 +76,8 @@ public:
 
  //Fully resets the hardware
   void reset(){
-    this->pitch = new SIM_AxisDevice(510);
-    this->yaw = new SIM_AxisDevice(1254);
+    this->pitch = new SIM_AxisDevice(550);
+    this->yaw = new SIM_AxisDevice(1240);
   }
 
   void deviceInfo(){

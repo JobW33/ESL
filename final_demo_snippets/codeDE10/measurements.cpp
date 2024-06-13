@@ -7,8 +7,8 @@
 #include <algorithm>
 
 // Select 1
-//#include "hardware/hardware_manager_DE10.h"
-#include "hardware/hardware_manager_RPI.h"
+#include "hardware/hardware_manager_DE10.h"
+//#include "hardware/hardware_manager_RPI.h"
 //#include "hardware/hardware_manager_sim.h"
 
 void sigint(int a)
@@ -36,8 +36,8 @@ void testCommuncationSpeed(int repeats){
 
   // repeat the comands this many times and measure the time
   for(int i = 0; i < repeats; i++){
-    manager.pitch->setDutyCycle(double(i)/10000);
-    manager.yaw->setDutyCycle(double(-i)/10000);
+    manager.pitch->setDutyCycle(double(i)/1000);
+    manager.yaw->setDutyCycle(double(-i)/1000);
 
     yawAngle = manager.yaw->getAngle();
     pitchAngle = manager.pitch->getAngle();
@@ -55,30 +55,26 @@ void testCommuncationSpeed(int repeats){
  * Helper function to get the Quadrature Decoder count value at the maximum positions
  */
 int _getCount(AxisDevice *dev,  double dutyCycle, int uSleepTime){
-  int counts[3] = {dev->getCount(), -1000, -2000};
+  int count = dev->getCount();
   
   dev->setDutyCycle(dutyCycle);
   usleep(uSleepTime);
  
  // while the motor position is still changing
-  while(counts[0] != counts[1] && counts[1] != counts[2] ){
-    counts[2] = counts[1];
-    counts[1] = counts[0];
-    //printf("counts: %d\n", dev->getCount());
+  while(count != dev->getCount()){
+    count = dev->getCount();
     usleep(uSleepTime);
-
-    counts[0] = dev->getCount();
   }
-  usleep(uSleepTime);
+  
   dev->setDutyCycle(0.0);
-  return counts[0];
+  return count;
 }
 
 /**
  * Moves the pitch and yaw to its minimum and maximum values and determines the range it can move in counts.
  */
 void determineCounts(){
-  int uSleepTime = 40'000;
+  int uSleepTime = 50'000;
   //double dutyCycle = 0.05;
 
   HardwareManager manager = HardwareManager();
@@ -86,13 +82,13 @@ void determineCounts(){
   printf("\n===================================\nCount range test: \n");
 
   // Get the QD count value at both extremes of the pitch
-  int minPitchCount = _getCount(manager.pitch, -0.15, uSleepTime); 
-  int maxPitchCount = _getCount(manager.pitch, 0.15, uSleepTime);
+  int minPitchCount = _getCount(manager.pitch, -0.1, uSleepTime); 
+  int maxPitchCount = _getCount(manager.pitch, 0.1, uSleepTime);
   printf(" >>> Pitch count range: %d\n", maxPitchCount-minPitchCount);
 
   // Get the QD count value at both extremes of the yaw
-  int minYawCount = _getCount(manager.yaw, -0.3, uSleepTime); 
-  int maxYawCount = _getCount(manager.yaw, 0.3, uSleepTime); 
+  int minYawCount = _getCount(manager.yaw, -0.2, uSleepTime); 
+  int maxYawCount = _getCount(manager.yaw, 0.2, uSleepTime); 
   printf(" >>> Yaw count range: %d\n", maxYawCount-minYawCount);
 }
 
@@ -102,28 +98,18 @@ void determineCounts(){
  * Helper function to calculate how long it takes from one side to the other
  */
 long int _getDuration(AxisDevice *dev, double dutyCycle, int uSleepTime){
-    usleep(1'00'000);
-
-    int counts[3] = {dev->getCount(), -1000, -2000};
+    int count = dev->getCount();
     auto start = std::chrono::high_resolution_clock::now();
 
     // set the given duty cycle
     dev->setDutyCycle(dutyCycle);
     usleep(uSleepTime);
     
-    
     // while the motor keeps moving, keep looping
-    do{
-      counts[1] =  counts[0];
-      counts[2] = counts[1];
-
-      printf("counts %d\n", counts[1]);
+    while(count != dev->getCount()){
+      count = dev->getCount();
       usleep(uSleepTime);
-
-      counts[0] = dev->getCount();
-      
     }
-    while( counts[0] != counts[1] && counts[1] != counts[2] );
 
     // calculate how long this took
     auto stop = std::chrono::high_resolution_clock::now();
@@ -131,6 +117,7 @@ long int _getDuration(AxisDevice *dev, double dutyCycle, int uSleepTime){
 
     // set the duty cycle to zero just to be safe
     dev->setDutyCycle(0.0);
+    usleep(1'00'000);
 }
 
 /**
@@ -138,7 +125,7 @@ long int _getDuration(AxisDevice *dev, double dutyCycle, int uSleepTime){
  */
 void determineRotationSpeed(double dutyCycle){
   HardwareManager manager = HardwareManager();
-  int uSleepTime = 10'000;
+  int uSleepTime = 100'000;
 
   printf("\n===================================\nRotation speed test: \n");
 
@@ -163,6 +150,7 @@ void determineRotationSpeed(double dutyCycle){
   long int pitchDurationBackwards =  _getDuration(manager.pitch, -dutyCycle, uSleepTime);
   printf(" >>> Pitch @%.2f Duty cycle: Took %.5fms to move to the other side and %.5fms to move back.\n", dutyCycle, double(pitchDurationForwward)/1000.0, double(pitchDurationBackwards)/1000.0);
 }
+
 
 
 /**
@@ -208,36 +196,6 @@ void determineJitter(){
 }
 
 
-void test(){
-  int counts[3] = {0, 1, 2};
-  HardwareManager manager = HardwareManager();
-  int uSleepTime = 20'000;
-  double dutyCycle = 0.001;
-  
-    // set the given duty cycle
-  manager.yaw->setDutyCycle(0.0);
-  manager.pitch->setDutyCycle(dutyCycle);
-  usleep(uSleepTime);
-    
-    
-  // while the motor keeps moving, keep looping
-  while(true){
-    counts[2] = counts[1];
-    counts[1] = counts[0];
-    counts[0] = manager.pitch->getCount();
-
-    printf("%d %d %d\n", counts[0], counts[1], counts[2]);
-
-    if(counts[0] == counts[1] && counts[1] == counts[2] ){
-      dutyCycle = -dutyCycle;
-      manager.pitch->setDutyCycle(dutyCycle);
-      counts[0] = 10, counts[1] = 20, counts[2] = 30;
-    }
-
-    usleep(uSleepTime);
-  }
-}
-
 
 int main(int argc, char** argv) {
 
@@ -248,19 +206,17 @@ int main(int argc, char** argv) {
   // set the signal interrupt
   signal(SIGINT, sigint);
 
-  // // measure how long it takes to repeat this many sets of commands
-  // testCommuncationSpeed(100);
+  // measure how long it takes to repeat this many sets of commands
+  testCommuncationSpeed(10000);
 
-  // // determine how much variation there is in the communication
-  // determineJitter();
+  // determine how much variation there is in the communication
+  determineJitter();
 
-  // // determine the value range while moving the motors
-  // determineCounts();
+  // determine the value range while moving the motors
+  determineCounts();
 
-  // // determine how fast the motors rotate from one side to the other at the given duty cycle
-  // determineRotationSpeed(0.3);
-
-  test();
+  // determine how fast the motors rotate from one side to the other at the given duty cycle
+  determineRotationSpeed(0.3);
 
   HardwareManager().reset();
 

@@ -1,4 +1,4 @@
-#include <cstring>
+
 #include <stdio.h>
 #include <math.h>
 
@@ -51,19 +51,15 @@ public:
   }
 
   double getAngle(){
-    return  StartingAngle + (getCount() * StepSize);
+    uint8_t rx;
+    spi_xfer(device, &getCMD, 1, &rx, 1);
+    return  StartingAngle + (rx * StepSize);
   }
 
   int getCount(){
-    unsigned char rx[2];
-    unsigned char tx[2] = {getCMD, getCMD};
-    spi_xfer(device, tx, 2, rx, 2);
-    int16_t val;
-    //uint8_t temp[2] = {rx[1], rx[0]};
-
-    memcpy(&val, &rx, 2);
-    printf("count: %d\n", val);
-    return val;
+    uint8_t rx;
+    spi_xfer(device, &getCMD, 1, &rx, 1);
+    return int(rx);
   }
 
   void setDutyCycle(float dutyCycle){
@@ -94,12 +90,12 @@ public:
     */
     uint8_t tx[4]; 
     tx[0] = setCMD;
-    tx[1] = (forward? 0x01 : 0x00);
-    tx[2] = *(&duty_val+1);
-    tx[3] = *(&duty_val);
+    tx[1] = (forward? 1 : 0);
+    tx[2] = *(&duty_val);
+    tx[3] = *(&duty_val+1);
 
     //send
-    spi_write(device, tx, 4);
+    spi_write(device, tx, 3);
   }
 };
 
@@ -122,8 +118,8 @@ public:
     reset();
 
     // Create the Axis Devices
-    this->pitch = new RPI_AxisDevice(devfd, 510, CommandID::SET_PITCH, CommandID::GET_PITCH);
-    this->yaw = new RPI_AxisDevice(devfd,  1254, CommandID::SET_YAW, CommandID::GET_YAW);
+    this->pitch = new RPI_AxisDevice(devfd, 540, CommandID::SET_PITCH, CommandID::GET_PITCH);
+    this->yaw = new RPI_AxisDevice(devfd,  1240, CommandID::SET_YAW, CommandID::GET_YAW);
   }
 
   // reset all the devices
