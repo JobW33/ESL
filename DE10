@@ -3,3 +3,5 @@ usr: root
 pswd: EmbeddedSystemsLab
 
 sudo minicom esl
+
+rm gst_hello; clear; g++ main.cpp gst/GstProcessor.cpp controller/tilt/PositionControllerTilt.cpp controller/tilt/common/xxinteg.cpp controller/pan/PositionControllerPan.cpp -o gst_hello $(pkg-config --cflags --libs gstreamer-1.0); ./gst_hello

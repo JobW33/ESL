@@ -13,13 +13,13 @@ GstProcessor::~GstProcessor() {
 bool GstProcessor::initialize(int argc, char *argv[]) {
     gst_init(&argc, &argv);
 
-    pipeline = gst_pipeline_new("YUV storing");
+    pipeline = gst_pipeline_new("YUV processing");
     source = gst_element_factory_make("v4l2src", "webcam source");
-    encoder = gst_element_factory_make("videoconvert", "video encoder");
+//    encoder = gst_element_factory_make("videoconvert", "convert video if needed"); // probably not needed.
     capfilt = gst_element_factory_make("capsfilter", "YUY2 data format");
     sink = gst_element_factory_make("appsink", "app sink");
 
-    if (!pipeline || !source || !encoder || !capfilt || !sink) {
+    if (!pipeline || !source || !capfilt || !sink) {
         g_print("One element could not be created. Exiting.\n");
         return false;
     }
@@ -33,12 +33,12 @@ bool GstProcessor::initialize(int argc, char *argv[]) {
                                         NULL);
     g_object_set(G_OBJECT(capfilt), "caps", caps, NULL);
 
-    g_object_set(G_OBJECT(source), "device", "/dev/video7", NULL);
+    g_object_set(G_OBJECT(source), "device", "/dev/video0", NULL);
     g_object_set(sink, "emit-signals", TRUE, NULL);
     g_signal_connect(sink, "new-sample", G_CALLBACK(new_sample), this);
 
-    gst_bin_add_many(GST_BIN(pipeline), source, encoder, capfilt, sink, NULL);
-    gst_element_link_many(source, encoder, capfilt, sink, NULL);
+    gst_bin_add_many(GST_BIN(pipeline), source, capfilt, sink, NULL);
+    gst_element_link_many(source, capfilt, sink, NULL);
     
     gst_element_set_state(pipeline, GST_STATE_PLAYING);
     

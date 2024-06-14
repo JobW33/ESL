@@ -5,7 +5,7 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
     output reg SPI_MISO = 0,
 
     output reg led = 1,
-    output reg led2 = 1,
+    output reg led2 = 0,
     output reg led3 = 1,
     output reg rst = 1,
 
@@ -28,6 +28,9 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
   // counts the amount of words we have received for the current command
   reg [3:0] word_counter = 0;
 
+
+  reg [2:0] led_debug_count = 0;
+
   // flag whether we hould output data
   reg write_enable = 0;
 
@@ -43,29 +46,26 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
   always @(posedge SPI_CLK)
   begin
 
-      // reset bit and word counter when slave select goes high
-      if (SPI_CS==1) begin
-        bit_counter <= 0;
-      end
 
-      else if (SPI_CS==0) begin
+      //else if (SPI_CS==0) begin
+      if (SPI_CS==0) begin
 
         // every new clock cycle
         // increment word counter and read input
-        bit_counter <= bit_counter + 1'b1;
         serial_data_in[MSG_WIDTH-1 - bit_counter[2:0]] = SPI_MOSI;
 
-        // handle writing data to the output
-        // if write_enable, output the data in serial_data_out
-        if ((write_enable == 1) && (bit_counter != QD_DATA_WIDTH-1)) begin
-          SPI_MISO <= serial_data_out[QD_DATA_WIDTH-2 - bit_counter];
-        end
+        bit_counter <= bit_counter + 1'b1;
         
         // every 8 clock cycles
         // handle newly received bytes
         if (bit_counter[2:0] == MSG_WIDTH-1) begin
           command_data[word_counter] = serial_data_in;
 
+
+          if( led_debug_count ==  7)
+            led2 <= 0;
+          else 
+            led_debug_count <= led_debug_count + 1;
 
           // if this is the first word, it indicates the command
           if(word_counter == 0) begin
@@ -74,7 +74,6 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
           
           word_counter = word_counter + 1'b1;
           rst = 0;
-          led2 = 0;
           led3 = 0;
 
           case (commandState)
@@ -88,8 +87,9 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
                 rst <= 1;
                 write_enable <= 0;
                 word_counter = 0;
-		led <= 0;
-		led3 <= 1;
+                serial_data_out = 0;
+		            led <= 0;
+		            led3 <= 1;
               end
 
             /*
@@ -113,8 +113,11 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
             */
             GET_PITCH_CMD:
               if(word_counter == 1) begin
-                serial_data_out <= PITCH_COUNT;
-                SPI_MISO <= serial_data_out[MSG_WIDTH-1];
+                serial_data_out = PITCH_COUNT;
+                write_enable <= 1;
+                bit_counter = 0;
+              end
+              else if (word_counter == 3) begin
                 write_enable <= 1;
                 word_counter = 0;
               end
@@ -140,8 +143,11 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
             */
             GET_YAW_CMD:
               if(word_counter == 1) begin
-                serial_data_out <= YAW_COUNT;
-                SPI_MISO <= serial_data_out[MSG_WIDTH-1];
+                serial_data_out = YAW_COUNT;
+                write_enable <= 1;
+                bit_counter = 0;
+              end
+              else if (word_counter == 3) begin
                 write_enable <= 1;
                 word_counter = 0;
               end
@@ -163,9 +169,18 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
             */
             default: begin
               led2 <= 1;
+              led_debug_count <= 0;
               word_counter = 0;
+              bit_counter = 0;
             end
           endcase
+
+          // handle writing data to the output
+          // if write_enable, output the data in serial_data_out
+          if ((write_enable == 1)) begin
+            SPI_MISO = serial_data_out[QD_DATA_WIDTH-1 - bit_counter];
+          end
+
         end
       end
     end

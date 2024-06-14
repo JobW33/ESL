@@ -12,8 +12,8 @@
 
 // select 1
 //#include "hw/hardware_manager_RPI.h"
-#include "hardware/hardware_manager_DE10.h"
-//#include "hardware/hardware_manager_sim.h"
+//#include "hardware/hardware_manager_DE10.h"
+#include "hardware/hardware_manager_sim.h"
 
 // the PID controller for the Yaw and Pitch
 #include "controller/controller.h"
@@ -35,6 +35,7 @@ auto sleepRemainder(std::chrono::time_point<std::chrono::system_clock> start, in
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
   if(duration.count() < uSleepTime){
     usleep(uSleepTime - duration.count());
+    //printf("Took %ld ms\n", duration.count());
   }
   else
   {
@@ -49,11 +50,9 @@ int main(int argc, char** argv) {
   // set the signal interrupt
   signal(SIGINT, sigint);
 
-  // create the hardware manager
+  // create the hardware manager, pid controller and video processor
   HardwareManager manager = HardwareManager();
   PID pid = PID();
-
-  // create the video processor
   GstProcessor processor;
 
   // start the video processor
@@ -61,58 +60,51 @@ int main(int argc, char** argv) {
     return -1;
   }
 
+  //Prevent the controller from stopping before we think it should stop.
+  printf("%f\n", pid.pitch->model.GetFinishTime());
+  printf("%f\n", pid.yaw->model.GetFinishTime());
 
-  // set a position to move to
-  pid.yaw->setInput(0.0);
-  pid.pitch->setInput(0.0);
 
   int usleep_time = 10'000;
   int index = 0;
 
-  auto start = std::chrono::high_resolution_clock::now();
-
-  double var = 7.0;
-
-  // 	/* set the parameters */
-	// m_P[4] = 10.5;		/* PID1\tauI */
-	// m_P[5] = -0.99;		/* SignalLimiter2\minimum */
-	// m_P[6] = 0.99;		/* SignalLimiter2\maximum */
-
   while (true)
   {
-
-    start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
     // listen to the video processor bus
-    if (processor.bus_call() == false)
-    {
-      break;
-    }
+    if (processor.bus_call() == false) { break; }
      
-    // get target angles
+    // get target angles from the camera
     double pitch_dif = processor.get_rady(); 
     double yaw_dif = processor.get_radx();
     
-    //get pitch and yaw angles
+    //get current pitch and yaw positions from the hardware
     double pitch_angle = manager.pitch->getAngle();
     double yaw_angle   = manager.yaw->getAngle();
+
+    // tell the PID controller what the current position is
+    pid.pitch->setPosition(pitch_angle);
+    pid.yaw->setPosition(yaw_angle);
    
-    // tell the PID controller what angle to target.
+    // tell the PID controller what position to go to
     pid.pitch->setInput(pitch_angle - pitch_dif);
     pid.yaw->setInput(yaw_angle + yaw_dif);
 
-    // tell the PID controller the current position
-    pid.pitch->setPosition(pitch_angle);
-    pid.yaw->setPosition(yaw_angle);
-
-    // get the output value of the controllers and update the duty cycles accordingly
-    manager.pitch->setDutyCycle(pid.pitch->getOutput()*0.1);
-    manager.yaw->setDutyCycle(pid.yaw->getOutput()*0.6);
+    // get the pid controller outputs
+    double pitch_pwm = pid.pitch->getOutput()*0.2;
+    double yaw_pwm = pid.yaw->getOutput()*0.6;
+    
+    // update the duty cycles based on the pid controller output
+    manager.pitch->setDutyCycle(pitch_pwm);
+    manager.yaw->setDutyCycle(yaw_pwm);
 
     //print status update
     if(not(index % 25)){
-      printf("pitch: %f yaw: %f\n", pitch_angle, yaw_angle);
-      printf("desired pitch: %f yaw: %f\n", pitch_dif, yaw_dif);
+      printf("Current         pitch: %f yaw: %f\n", pitch_angle, yaw_angle);
+      printf("Difference          pitch: %f yaw: %f\n", pitch_dif, yaw_dif);
+      printf("Desired                 pitch: %f yaw: %f\n", pitch_angle - pitch_dif, yaw_angle + yaw_dif);
+      printf("PWM                         pitch: %f yaw: %f\n", pitch_pwm, yaw_pwm);
     }
 
     //update the controller
@@ -120,6 +112,7 @@ int main(int argc, char** argv) {
 
     // sleep and update index
     sleepRemainder(start, usleep_time);
+
     index = index + 1;
   }
 

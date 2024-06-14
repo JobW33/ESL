@@ -38,9 +38,9 @@ reg YAW_ENC_B;
 // wire YAW_DIRB;
 
 
-rpi_toplevel DUT (  clk, 
+toplevel DUT (  clk, 
                 SPI_CLK, SPI_CS, SPI_MOSI, SPI_MISO, 
-                led, led2, led3,
+                led,
                 PITCH_ENC_A, PITCH_ENC_B, PITCH_PWM_VAL, PITCH_DIRA, PITCH_DIRB, 
                 YAW_ENC_A, YAW_ENC_B, YAW_PWM_VAL, YAW_DIRA, YAW_DIRB
             );
@@ -221,7 +221,11 @@ always begin
     SPI_CS = 1;
     #WORD_TIME;
     SPI_CS = 0;
-    // 4 word 0x02 upper duty cycle value
+    // 4 word 0x01 upper duty cycle value
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -252,10 +256,6 @@ always begin
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_MOSI = 0;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
 
 
     SPI_CS = 1;
@@ -342,7 +342,7 @@ always begin
 
     #WORD_TIME;
     SPI_CS = 0;
-    // 7 word 0x12
+    // 7 word 0x00
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -355,12 +355,6 @@ always begin
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
-    SPI_MOSI = 1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_MOSI = 0;
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -369,22 +363,23 @@ always begin
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
-    SPI_MOSI = 1;
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
-    SPI_MOSI = 0;
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
-    SPI_MOSI = 0;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
 
 
     #WORD_TIME;
     SPI_CS = 0;
-    // 8 word 0x12
+    // 8 word 0x00
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -397,12 +392,6 @@ always begin
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
-    SPI_MOSI = 1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_MOSI = 0;
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -411,21 +400,18 @@ always begin
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
-    SPI_MOSI = 1;
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
-    SPI_MOSI = 0;
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
-    SPI_MOSI = 0;
-    
-    #WORD_TIME;
-    #WORD_TIME;
-    #WORD_TIME;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
 end
 
 endmodule

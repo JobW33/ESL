@@ -113,6 +113,9 @@ public:
   PID(){
     this->pitch = new PitchController();
     this->yaw = new YawController();
+
+    this->pitch->model.SetFinishTime(1e12);
+    this->yaw->model.SetFinishTime(1e12);
   }
 
   /**

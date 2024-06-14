@@ -1,4 +1,4 @@
-module rpi_toplevel #(parameter 
+module toplevel #(parameter 
     MSG_WIDTH = 8,
     PWM_DATA_WIDTH = 16,
     QD_DATA_WIDTH = 16,
