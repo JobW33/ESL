@@ -82,7 +82,7 @@ always begin #1
         temp1=~temp1;
     
     // reverse the direction halfway through the sim
-    if (sim_pulse_count < SIM_END/2) begin
+    if (sim_pulse_count < SIM_END) begin
         YAW_ENC_A = temp2;
         YAW_ENC_B = temp1;
         PITCH_ENC_A = temp2;
@@ -137,68 +137,170 @@ always begin
     SPI_MOSI = 0;
 
 
-    SPI_CS = 1;
-    #WORD_TIME;
-    SPI_CS = 0;
-    // 2 word 0x11 Set pitch duty cycle command ID
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_MOSI = 1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_MOSI = 0;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_MOSI = 1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_MOSI = 0;
-    
+//    SPI_CS = 1;
+//    #WORD_TIME;
+//    SPI_CS = 0;
+//    // 2 word 0x11 Set pitch duty cycle command ID
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_MOSI = 1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_MOSI = 0;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_MOSI = 1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_MOSI = 0;
+//    
+//
+//    SPI_CS = 1;
+//    #WORD_TIME;
+//    SPI_CS = 0;
+//    // 3 word 0x01 Set pitch direction
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_MOSI = 1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_MOSI = 0;
+//
+//    SPI_CS = 1;
+//    #WORD_TIME;
+//    SPI_CS = 0;
+//    // 4 word 0x02 upper duty cycle value
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_MOSI = 1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_MOSI = 0;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//
+//
+//    SPI_CS = 1;
+//    #WORD_TIME;
+//    SPI_CS = 0;
+//    // 5 word 0x40 lower duty cycle value
+//    SPI_MOSI = 1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_MOSI = 0;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
+//    SPI_CLK = ~SPI_CLK;
+//    #1;
 
     SPI_CS = 1;
     #WORD_TIME;
     SPI_CS = 0;
-    // 3 word 0x01 Set pitch direction
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
+    // 6 word 0x12 Get pitch count command ID
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -212,6 +314,109 @@ always begin
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+
+
+    #WORD_TIME;
+    SPI_CS = 0;
+    // 7 word 0x12
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+
+
+    #WORD_TIME;
+    SPI_CS = 0;
+    // 8 word 0x12
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -221,19 +426,7 @@ always begin
     SPI_CS = 1;
     #WORD_TIME;
     SPI_CS = 0;
-    // 4 word 0x02 upper duty cycle value
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
-    SPI_CLK = ~SPI_CLK;
-    #1;
+    // 6 word 0x12 Get pitch count command ID
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -256,12 +449,38 @@ always begin
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
 
 
-    SPI_CS = 1;
     #WORD_TIME;
     SPI_CS = 0;
-    // 5 word 0x40 lower duty cycle value
+    // 7 word 0x12
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
     SPI_MOSI = 1;
     SPI_CLK = ~SPI_CLK;
     #1;
@@ -276,6 +495,22 @@ always begin
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
+    SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+
+
+    #WORD_TIME;
+    SPI_CS = 0;
+    // 8 word 0x12
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -288,6 +523,12 @@ always begin
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
+    SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
     SPI_CLK = ~SPI_CLK;
     #1;
     SPI_CLK = ~SPI_CLK;
@@ -296,6 +537,17 @@ always begin
     #1;
     SPI_CLK = ~SPI_CLK;
     #1;
+    SPI_MOSI = 1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_CLK = ~SPI_CLK;
+    #1;
+    SPI_MOSI = 0;
 
     SPI_CS = 1;
     #WORD_TIME;
@@ -423,8 +675,6 @@ always begin
     #1;
     SPI_MOSI = 0;
     
-    #WORD_TIME;
-    #WORD_TIME;
     #WORD_TIME;
 end
 

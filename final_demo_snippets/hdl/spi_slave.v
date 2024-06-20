@@ -50,6 +50,12 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
       //else if (SPI_CS==0) begin
       if (SPI_CS==0) begin
 
+        // handle writing data to the output
+        // if write_enable, output the data in serial_data_out
+        if ((write_enable == 1)) begin
+          SPI_MISO = serial_data_out[QD_DATA_WIDTH-1 - bit_counter];
+        end
+
         // every new clock cycle
         // increment word counter and read input
         serial_data_in[MSG_WIDTH-1 - bit_counter[2:0]] = SPI_MOSI;
@@ -118,7 +124,7 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
                 bit_counter = 0;
               end
               else if (word_counter == 3) begin
-                write_enable <= 1;
+                write_enable <= 0;
                 word_counter = 0;
               end
 
@@ -148,7 +154,7 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
                 bit_counter = 0;
               end
               else if (word_counter == 3) begin
-                write_enable <= 1;
+                write_enable <= 0;
                 word_counter = 0;
               end
 
@@ -174,13 +180,6 @@ module spi_slave #(parameter MSG_WIDTH = 8, PWM_DATA_WIDTH = 16, QD_DATA_WIDTH =
               bit_counter = 0;
             end
           endcase
-
-          // handle writing data to the output
-          // if write_enable, output the data in serial_data_out
-          if ((write_enable == 1)) begin
-            SPI_MISO = serial_data_out[QD_DATA_WIDTH-1 - bit_counter];
-          end
-
         end
       end
     end
