@@ -15,6 +15,7 @@ wire [31:0] mem_in;
 
 assign mem_in[31] = reset;
 assign mem_in[30] = dir;
+assign mem_in[29:TEST_COUNT_SIZE] = 0;
 assign mem_in[TEST_COUNT_SIZE - 1:0] = percentage_high;
 
 Steering #(.COUNT_SIZE(TEST_COUNT_SIZE)) DUT (clk, reset, mem_in, output_A, output_B, pwm);
