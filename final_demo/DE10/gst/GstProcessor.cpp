@@ -1,6 +1,6 @@
 #include "GstProcessor.h"
 
-GstProcessor::GstProcessor() : pipeline(nullptr), source(nullptr), encoder(nullptr), capfilt(nullptr), sink(nullptr), bus(nullptr) {}
+GstProcessor::GstProcessor() : pipeline(nullptr), source(nullptr), capfilt(nullptr), sink(nullptr), bus(nullptr) {}
 
 GstProcessor::~GstProcessor() {
     if (pipeline) {
@@ -15,7 +15,6 @@ bool GstProcessor::initialize(int argc, char *argv[]) {
 
     pipeline = gst_pipeline_new("YUV processing");
     source = gst_element_factory_make("v4l2src", "webcam source");
-//    encoder = gst_element_factory_make("videoconvert", "convert video if needed"); // probably not needed.
     capfilt = gst_element_factory_make("capsfilter", "YUY2 data format");
     sink = gst_element_factory_make("appsink", "app sink");
 

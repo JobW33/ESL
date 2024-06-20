@@ -64,7 +64,6 @@ int main(int argc, char** argv) {
   printf("%f\n", pid.pitch->model.GetFinishTime());
   printf("%f\n", pid.yaw->model.GetFinishTime());
 
-
   int usleep_time = 10'000;
   int index = 0;
 
@@ -113,7 +112,7 @@ int main(int argc, char** argv) {
     // sleep and update index
     sleepRemainder(start, usleep_time);
 
-    index = index + 1;
+    index++;
   }
 
   return 0;
