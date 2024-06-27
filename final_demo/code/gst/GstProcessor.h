@@ -1,4 +1,4 @@
-//CHATGPT I asked chat gpt to make a class for me. Almost all function definitions are written by me.
+//CHATGPT I asked chat gpt to make a class for me. Almost all function definitions are written by me. With help of https://gstreamer.freedesktop.org/documentation/?gi-language=c
 #ifndef GSTPROCESSOR_H
 #define GSTPROCESSOR_H
 

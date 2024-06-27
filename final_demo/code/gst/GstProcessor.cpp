@@ -3,26 +3,29 @@
 GstProcessor::GstProcessor() : pipeline(nullptr), source(nullptr), capfilt(nullptr), sink(nullptr), bus(nullptr) {}
 
 GstProcessor::~GstProcessor() {
-    if (pipeline) {
+    if (pipeline) { // Destroy the pipeline if it's still there.
         gst_element_set_state(pipeline, GST_STATE_NULL);
         gst_object_unref(GST_OBJECT(pipeline));
     }
+    // Destroy the bus.
     gst_object_unref(bus);
 }
 
 bool GstProcessor::initialize(int argc, char *argv[]) {
     gst_init(&argc, &argv);
 
+    // Make a pipeline with three elements
     pipeline = gst_pipeline_new("YUV processing");
-    source = gst_element_factory_make("v4l2src", "webcam source");
-    capfilt = gst_element_factory_make("capsfilter", "YUY2 data format");
-    sink = gst_element_factory_make("appsink", "app sink");
+    source = gst_element_factory_make("v4l2src", "webcam source");        // A Source element.
+    capfilt = gst_element_factory_make("capsfilter", "YUY2 data format"); // A filter element to get the correct data format.
+    sink = gst_element_factory_make("appsink", "app sink");               // A sink element to process the frames.
 
     if (!pipeline || !source || !capfilt || !sink) {
         g_print("One element could not be created. Exiting.\n");
         return false;
     }
 
+    // Set the data format we expect.
     GstCaps *caps = gst_caps_new_simple("video/x-raw",
                                         "format", G_TYPE_STRING, "YUY2",
                                         "framerate", GST_TYPE_FRACTION, 30, 1,
@@ -32,15 +35,21 @@ bool GstProcessor::initialize(int argc, char *argv[]) {
                                         NULL);
     g_object_set(G_OBJECT(capfilt), "caps", caps, NULL);
 
+    // Set the source element to the camera.
     g_object_set(G_OBJECT(source), "device", "/dev/video7", NULL);
     g_object_set(sink, "emit-signals", TRUE, NULL);
-    g_signal_connect(sink, "new-sample", G_CALLBACK(new_sample), this);
 
+    // Set the callback function for the sink.
+    g_signal_connect(sink, "new-sample", G_CALLBACK(new_sample), NULL); 
+
+    // Connect all elements of the pipeline.
     gst_bin_add_many(GST_BIN(pipeline), source, capfilt, sink, NULL);
     gst_element_link_many(source, capfilt, sink, NULL);
     
+    // Start the pipeline.
     gst_element_set_state(pipeline, GST_STATE_PLAYING);
     
+    // Get a bus element to listen to.
     bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
 
     return true;
@@ -71,6 +80,7 @@ void GstProcessor::set_YDistance(float yDist){
 }
 
 GstFlowReturn GstProcessor::new_sample(GstElement *sink) {
+    // Navigate Gstreamers data structures in order to get to a frame.
     GstSample *sample;
     g_signal_emit_by_name(sink, "pull-sample", &sample);
     if (sample) {
@@ -86,29 +96,33 @@ void GstProcessor::process_sample(GstSample *sample) {
     GstMapInfo info;
     gst_buffer_map(buffer, &info, GST_MAP_READ);
 
-    int total = 0;
-    int total_x = 0;
-    int total_y = 0;
+    int total = 0;    // The total amount of green pixels there are.
+    int total_x = 0;  // The summed x coordinates of all green pixels.
+    int total_y = 0;  // The summed y coordinates of all green pixels.
 
     for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x += 2) {
-            int idx = y * WIDTH * 2 + x * 2;
-            int U = info.data[idx + 1];
-            int V = info.data[idx + 3];
+        for (int x = 0; x < WIDTH; x += 2) {  // Loop through the entire frame. x += 2 because |Y||U| |Y||V|.
+            int idx = y * WIDTH * 2 + x * 2;  // Get the current pixel position in the array.
+            int U = info.data[idx + 1];       // Get the U component (skip the y component).
+            int V = info.data[idx + 3];       // Get the V component (skip the y u y components).
 
-            int add = ((U < 140) && (V < 100)) ? 1 : 0;
+            int add = ((U < 140) && (V < 100)) ? 1 : 0;   // This checks has been found to work in the python script.
             total_x += add * x;
             total_y += add * y;
             total += add;
         }
     }
-
-    // I think ternary operators are faster so I use them as much as possible.
+    
+    // If there are enough pixels green (i.e. there is a sufficiently large green object on screen) calculate the center of mass.
     bool enough = (total > ((HEIGHT * WIDTH) >> 8));
-    dx = enough ? (HWIDTH - total_x/total) : 0;
-    dy = enough ? (HHEIGHT - total_y/total) : 0;
-    radx = dx / XDistance;
-    rady = dy / YDistance;
+    
+    // Note: here we use H-WIDTH and H-HEIGTH. Which are half of the width and height respectively.
+    dx = enough ? (HWIDTH - total_x/total) : 0;     // The centre of mass x component in pixels from the centre of the frame.
+    dy = enough ? (HHEIGHT - total_y/total) : 0;    // The centre of massi y component in pixels from the centre of the frame.
+
+    // Update the radx and rady class members.
+    radx = dx / XDistance;  // This is an approximation for the arctan(dx / some_const).
+    rady = dy / YDistance;  // This is an approximation for the arctan(dy / some_const).
 
     gst_buffer_unmap(buffer, &info);
 }
@@ -146,6 +160,7 @@ bool GstProcessor::bus_call() {
     return true;
 }
 
+// Initialize the class members.
 int GstProcessor::dx = 0;
 int GstProcessor::dy = 0;
 float GstProcessor::radx = 0;
